@@ -41,10 +41,10 @@
 <div id="mainContent" class="container">
     <h1>📱 市橋家のスマート連絡帳</h1>
     
-    <!-- 📸 指定の画像を表示 -->
+    <!-- 📸 画像の名前を ichihashirenraku.jpg に合わせました -->
     <img src="ichihashirenraku.jpg" alt="市橋家の連絡帳イメージ" class="top-img">
 
-    <!-- 1. 📞 市橋家の緊急連絡先リスト（表記をスッキリ変更） -->
+    <!-- 1. 📞 緊急連絡先リスト -->
     <div class="section">
         <h2>📞 緊急連絡先</h2>
         <ul>
@@ -89,7 +89,7 @@
 
 <script>
     // 💡 ログイン用パスワード
-    const CORRECT_PASSWORD = "ichihashi905"; 
+    const CORRECT_PASSWORD = "ichihashi905kano"; 
 
     function checkPassword() {
         const input = document.getElementById('passwordInput').value;
@@ -123,6 +123,7 @@
         loadSchedules();
     }
 
+    // カレンダー表示
     function loadSchedules() {
         const board = document.getElementById('scheduleBoard');
         board.innerHTML = '';
@@ -135,6 +136,7 @@
         });
     }
 
+    // 連絡追加
     function addMessage() {
         const name = document.getElementById('nameInput').value;
         const message = document.getElementById('messageInput').value;
@@ -149,6 +151,7 @@
         loadMessages();
     }
 
+    // 連絡表示
     function loadMessages() {
         const board = document.getElementById('messageBoard');
         board.innerHTML = '';
