@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>市橋家のスマート連絡帳</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; font-size: 24px; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .top-img { width: 100%; height: auto; border-radius: 5px; margin-bottom: 20px; display: block; }
+        .section { margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        h2 { font-size: 18px; margin-top: 0; color: #007bff; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px 0; border-bottom: 1px solid #ddd; }
+        li:last-child { border-bottom: none; }
+        input[type="text"], input[type="date"], input[type="password"], textarea { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .time { font-size: 12px; color: #666; display: block; }
+        
+        /* 🔒 パスワード画面のスタイル */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 350px; width: 90%; }
+        #mainContent { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- 🔒 パスワード入力画面 -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2>🔑 市橋家 認証</h2>
+        <p>パスワードを入力してください</p>
+        <input type="password" id="passwordInput" placeholder="パスワード">
+        <button onclick="checkPassword()">ログイン</button>
+    </div>
+</div>
+
+<!-- 📱 ログイン後に表示されるメイン画面 -->
+<div id="mainContent" class="container">
+    <h1>📱 市橋家のスマート連絡帳</h1>
+    
+    <!-- 📸 指定の画像を表示 -->
+    <img src="ichihashirenraku.jpg" alt="市橋家の連絡帳イメージ" class="top-img">
+
+    <!-- 1. 📞 市橋家の緊急連絡先リスト（表記をスッキリ変更） -->
+    <div class="section">
+        <h2>📞 緊急連絡先</h2>
+        <ul>
+            <li><strong>パパ（携帯）:</strong> <a href="tel:09029288264">090-2928-8264</a></li>
+            <li><strong>ママ（携帯）:</strong> <a href="tel:08051601484">080-5160-1484</a></li>
+            <li><strong>ばあば（携帯）:</strong> <a href="tel:09033091118">090-3309-1118</a></li>
+            <li><strong>ばあば（家）:</strong> <a href="tel:0582468193">058-246-8193</a></li>
+            <li><strong>由美ちゃん（携帯）:</strong> <a href="tel:09023499545">090-2349-9545</a></li>
+            <li><strong>由美ちゃん（家）:</strong> <a href="tel:0526819498">052-681-9498</a></li>
+        </ul>
+    </div>
+
+    <!-- 2. カレンダー・予定書き込みフォーム -->
+    <div class="section">
+        <h2>📅 家族の予定を追加する</h2>
+        <input type="text" id="scheduleNameInput" placeholder="だれの予定？（例：パパ、全員）">
+        <input type="date" id="scheduleDateInput">
+        <input type="text" id="scheduleTextInput" placeholder="予定の内容（例：出張、ゴミの日）">
+        <button onclick="addSchedule()">予定をカレンダーに登録</button>
+    </div>
+
+    <!-- 3. カレンダー予定の一覧表示エリア -->
+    <div class="section">
+        <h2>📌 これからの予定一覧</h2>
+        <ul id="scheduleBoard"></ul>
+    </div>
+
+    <!-- 4. 連絡を書き込むフォーム -->
+    <div class="section">
+        <h2>✍️ 新しい連絡を書き込む</h2>
+        <input type="text" id="nameInput" placeholder="あなたの名前（例：ママ）">
+        <textarea id="messageInput" rows="3" placeholder="連絡内容を入力してください"></textarea>
+        <button onclick="addMessage()">連絡を投稿する</button>
+    </div>
+
+    <!-- 5. 連絡掲示板の表示エリア -->
+    <div class="section">
+        <h2>📌 連絡掲示板</h2>
+        <ul id="messageBoard"></ul>
+    </div>
+</div>
+
+<script>
+    // 💡 ログイン用パスワード
+    const CORRECT_PASSWORD = "ichihashi905"; 
+
+    function checkPassword() {
+        const input = document.getElementById('passwordInput').value;
+        if (input === CORRECT_PASSWORD) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            initApp();
+        } else {
+            alert('パスワードが違います。');
+        }
+    }
+
+    function initApp() {
+        loadMessages();
+        loadSchedules();
+        const today = new Date().toISOString().split('T');
+        document.getElementById('scheduleDateInput').value = today;
+    }
+
+    function addSchedule() {
+        const who = document.getElementById('scheduleNameInput').value;
+        const date = document.getElementById('scheduleDateInput').value;
+        const text = document.getElementById('scheduleTextInput').value;
+        if (!who || !date || !text) { alert('すべての項目を入力してください。'); return; }
+        const schedObj = { who: who, date: date, text: text };
+        let schedules = JSON.parse(localStorage.getItem('familySchedule')) || [];
+        schedules.push(schedObj);
+        schedules.sort((a, b) => new Date(a.date) - new Date(b.date));
+        localStorage.setItem('familySchedule', JSON.stringify(schedules));
+        document.getElementById('scheduleTextInput').value = '';
+        loadSchedules();
+    }
+
+    function loadSchedules() {
+        const board = document.getElementById('scheduleBoard');
+        board.innerHTML = '';
+        const schedules = JSON.parse(localStorage.getItem('familySchedule')) || [];
+        if (schedules.length === 0) { board.innerHTML = '<li>予定はありません</li>'; return; }
+        schedules.forEach(sched => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${sched.date}</strong> [${sched.who}] ${sched.text}`;
+            board.appendChild(li);
+        });
+    }
+
+    function addMessage() {
+        const name = document.getElementById('nameInput').value;
+        const message = document.getElementById('messageInput').value;
+        if (!name || !message) { alert('名前と連絡内容を入力してください。'); return; }
+        const now = new Date();
+        const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const msgObj = { name: name, text: message, time: timeStr };
+        let messages = JSON.parse(localStorage.getItem('familyLog')) || [];
+        messages.unshift(msgObj);
+        localStorage.setItem('familyLog', JSON.stringify(messages));
+        document.getElementById('messageInput').value = '';
+        loadMessages();
+    }
+
+    function loadMessages() {
+        const board = document.getElementById('messageBoard');
+        board.innerHTML = '';
+        const messages = JSON.parse(localStorage.getItem('familyLog')) || [];
+        messages.forEach(msg => {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${msg.name}</strong> <span class="time">${msg.time}</span><br>${msg.text}`;
+            board.appendChild(li);
+        });
+    }
+</script>
+
+</body>
+</html>
